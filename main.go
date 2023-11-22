@@ -11,7 +11,7 @@ import (
 const (
 	pageSize    = 25000
 	httpTimeout = 30 * time.Second
-	userAgent   = "octopus_clickhouse"
+	userAgent   = "github.com/46bit/octopus-clickhouse"
 
 	defaultApiHostname = "https://api.octopus.energy"
 	defaultChDatabase  = "default"
@@ -23,7 +23,7 @@ var (
 	apiUser     string
 	apiAuth     string
 
-	chHostname string
+	chUrl      string
 	chUser     string
 	chPassword string
 	chHeaders  map[string]string
@@ -48,7 +48,7 @@ func init() {
 	apiUser = requireStringEnv("API_USER")
 	apiAuth = "Basic " + base64.StdEncoding.EncodeToString([]byte(apiUser+":"))
 
-	chHostname = requireStringEnv("CH_HOSTNAME")
+	chUrl = requireStringEnv("CH_URL")
 	chUser = requireStringEnv("CH_USER")
 	chPassword = os.Getenv("CH_PASSWORD")
 	chHeadersJson := os.Getenv("CH_HEADERS")
@@ -80,7 +80,7 @@ func init() {
 }
 
 func main() {
-	log.Printf("Attempting to backfill %v of data from %q into %q\n", backfillDuration, apiHostname, chHostname)
+	log.Printf("Attempting to backfill %v of data from %q into %q\n", backfillDuration, apiHostname, chUrl)
 
 	if err := chTableExists(); err != nil {
 		log.Fatalf("You may need to apply the schema: %v", err)

@@ -72,7 +72,7 @@ func chInsertRequest(rows []ChConsumption) (*http.Request, error) {
 }
 
 func basicChRequest(sql string, body *io.ReadCloser) (*http.Request, error) {
-	reqUrl, err := url.Parse(chHostname)
+	reqUrl, err := url.Parse(chUrl)
 	if err != nil {
 		return nil, err
 	}
