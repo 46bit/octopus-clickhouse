@@ -1,31 +1,42 @@
 CREATE TABLE IF NOT EXISTS octopus_30m_data (
-  fuel Enum('gas' = 1, 'electricity' = 2),
+  fuel LowCardinality(String),
   start DateTime,
-  consumption Float64
-) ENGINE = ReplacingMergeTree
+  inserted SimpleAggregateFunction(min, DateTime) DEFAULT now(),
+  consumption SimpleAggregateFunction(max, Float64)
+) ENGINE = AggregatingMergeTree
 PARTITION BY toYYYYMM(start)
 ORDER BY (fuel, start)
 PRIMARY KEY (fuel, start);
 
-CREATE VIEW IF NOT EXISTS octopus_gas_30m AS (
+CREATE VIEW IF NOT EXISTS octopus_30m AS (
   SELECT
+    fuel,
     start,
     start + INTERVAL '30' MINUTE AS end,
-    max(consumption) AS cubic_metres,
-    cubic_metres * 10 AS approx_kwh
+    min(inserted) AS inserted,
+    max(consumption) AS consumption
   FROM octopus_30m_data
-  WHERE fuel = 'gas'
-  GROUP BY start
-  ORDER BY start
+  GROUP BY fuel, start
+  ORDER BY fuel, start
 );
 
 CREATE VIEW IF NOT EXISTS octopus_electricity_30m AS (
   SELECT
     start,
-    start + INTERVAL '30' MINUTE AS end,
-    max(consumption) AS kwh
-  FROM octopus_30m_data
+    end,
+    inserted,
+    consumption AS kwh
+  FROM octopus_30m
   WHERE fuel = 'electricity'
-  GROUP BY start
-  ORDER BY start
+);
+
+CREATE VIEW IF NOT EXISTS octopus_gas_30m AS (
+  SELECT
+    start,
+    end,
+    inserted,
+    consumption AS cubic_metres,
+    cubic_metres * 10 AS approx_kwh
+  FROM octopus_30m
+  WHERE fuel = 'gas'
 );
